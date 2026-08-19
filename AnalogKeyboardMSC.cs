@@ -47,6 +47,7 @@ namespace AnalogKeyboardMSC
             var harmony = HarmonyInstance.Create("AnalogKeyboardMSC");
             harmony.PatchAll();
 
+            //getting and setting the path for all calls to wooting_analog_wrapper
             [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
             static extern IntPtr LoadLibrary(string lpFileName);
 
@@ -55,12 +56,14 @@ namespace AnalogKeyboardMSC
             [DllImport(SdkLib, EntryPoint = "wooting_analog_initialise")]
             static extern int initialise();
 
-            string absoluteDllPath = @"H:\Steam\steamapps\common\My Summer Car\Mods\analog\wooting_analog_wrapper.dll";
+            string executingDllPath = Assembly.GetExecutingAssembly().Location;
+            string modDirectory = Path.GetDirectoryName(executingDllPath);
+            string absoluteDllPath = Path.Combine(modDirectory, @"analog\wooting_analog_wrapper.dll");
 
             if (File.Exists(absoluteDllPath))
             {
-                // Windows loads the exact target DLL into RAM right now
                 IntPtr handle = LoadLibrary(absoluteDllPath);
+                if (handle == IntPtr.Zero) return;
             }
 
 
@@ -78,6 +81,7 @@ namespace AnalogKeyboardMSC
 
         private void Mod_PostLoad()
         {
+            if (IsWootingSDKActive != true) return;
             ModConsole.Print("postload");
             List<string> names = [];
             List<int> names2 = [];
@@ -143,6 +147,8 @@ namespace AnalogKeyboardMSC
         // Update is called once per frame
         private void Mod_Update()
         {
+            if (IsWootingSDKActive != true) return;
+
             //name = cInput.GetAxisRaw("Throttle").ToString();
 
             string currentCar = FsmVariables.GlobalVariables.FindFsmString("PlayerCurrentVehicle").Value;
