@@ -23,7 +23,6 @@ namespace AnalogKeyboardMSC
         public override string Description => ""; // Short description of your mod 
         public override Game SupportedGames => Game.MySummerCar_And_MyWinterCar;
         
-        public bool IsWootingSDKActive = false;
 
         public override void ModSetup()
         {
@@ -82,32 +81,27 @@ namespace AnalogKeyboardMSC
         private void Mod_PostLoad()
         {
             if (IsWootingSDKActive != true) return;
-            ModConsole.Print("postload");
+            ModConsole.Print("wooting postload");
             List<string> names = [];
             List<int> names2 = [];
 
             Type targetType = typeof(cInput);
 
             
-            FieldInfo hashField = targetType.GetField("_inputNameHash", BindingFlags.NonPublic | BindingFlags.Static);
             FieldInfo nameField = targetType.GetField("_inputName", BindingFlags.NonPublic | BindingFlags.Static);
             FieldInfo inputsField = targetType.GetField("_inputPrimary", BindingFlags.NonPublic | BindingFlags.Static);
 
             // 3. Read the values (pass 'null' as the argument because the fields are static)
-            Dictionary<int, int> inputNameHash = (Dictionary<int, int>)hashField.GetValue(null);
             string[] inputName = (string[])nameField.GetValue(null);
-            KeyCode[] inputsDict = (KeyCode[])inputsField.GetValue(null);
+            KeyCode[] inputsKeys = (KeyCode[])inputsField.GetValue(null);
 
-            ModConsole.Print("found1 " + inputNameHash.Count);
-            ModConsole.Print("found2 " + inputName.Length);
-            ModConsole.Print("found3 " + inputsDict.Length);
 
             if (inputName != null)
             {
                 ModConsole.Print("postload1");
                 int[] leftPositions = inputName
                     .Select((value, index) => new { value, index })
-                    .Where(pair => pair.value == "Left" || pair.value == "Right" || pair.value == "Up" || pair.value == "Down")
+                    .Where(pair => pair.value == "ThrottleOn" || pair.value == "BrakeOn" || pair.value == "Left" || pair.value == "Right" || pair.value == "Handbrake" || pair.value == "ClutchOn")
                     .Select(pair => pair.index)
                     .ToArray();
                 names2 = [.. leftPositions];
@@ -118,15 +112,30 @@ namespace AnalogKeyboardMSC
                 string control = inputName[num];
                 switch (control)
                 {
-                    case "Up":
-
+                    case "ThrottleOn":
+                        ZForwardKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
+                    case "BrakeOn":
+                        ZReverseKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
+                    case "Left":
+                        ZLeftKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
+                    case "Right":
+                        ZRightKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
+                    case "Handbrake":
+                        ZHandbrakeKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
+                    case "ClutchOn":
+                        ZClutchKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
                     default:
                         break;
                 }
-                if (inputName[num] == "Left")
-                ModConsole.Log("n= " + num);
-                ModConsole.Log("n= " + inputName[num]);
-                ModConsole.Log("c= " + inputsDict[num]);
+                ModConsole.Log("2= " + num);
+                ModConsole.Log("3= " + inputName[num]);
+                ModConsole.Log("4= " + inputsKeys[num].ToString());
             }
             ModConsole.Print("found4 " + names2.Count);
         }
@@ -138,8 +147,8 @@ namespace AnalogKeyboardMSC
             //GUI.Box(new Rect(10, 10, 160, 120), "Debug Menu");
 
             // 2. Draw static text
-            GUI.Label(new Rect(20, 40, 140, 20), $"1= {name}");
-            GUI.Label(new Rect(20, 60, 140, 20), $"2 = {name2}");
+            //GUI.Label(new Rect(20, 40, 140, 20), $"1= {name}");
+            //GUI.Label(new Rect(20, 60, 140, 20), $"2 = {name2}");
             //GUI.Label(new Rect(20, 40, 140, 20), $"a = {Left}");
             //GUI.Label(new Rect(20, 60, 140, 20), $"d = {Right}");
         }
@@ -156,18 +165,18 @@ namespace AnalogKeyboardMSC
 
             float result1 = 0;
             WootingAnalogResult result2 = WootingAnalogResult.Failure;
-            result1 = WootingAnalogSDK.ReadAnalog(26, out result2);
-            if (result1 > -1) Forward = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(22, out result2);
-            if (result1 > -1) Reverse = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(4, out result2);
-            if (result1 > -1) Left = -result1;
-            result1 = WootingAnalogSDK.ReadAnalog(7, out result2);
-            if (result1 > -1) Right = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(225, out result2);
+            result1 = WootingAnalogSDK.ReadAnalog(ZForwardKey, out result2);
+            if (result1 > -1) ZForward = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZReverseKey, out result2);
+            if (result1 > -1) ZReverse = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZLeftKey, out result2);
+            if (result1 > -1) ZLeft = -result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZRightKey, out result2);
+            if (result1 > -1) ZRight = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZClutchKey, out result2);
             if (result1 > -1) ZClutch = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(44, out result2);
-            if (result1 > -1) Handbrake = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZHandbrakeKey, out result2);
+            if (result1 > -1) ZHandbrake = result1;
         }
 
         //called every physics tick
@@ -183,28 +192,30 @@ namespace AnalogKeyboardMSC
         [HarmonyPrefix]
         public static bool Prefix(string description, ref float __result)
         {
+            if (IsWootingSDKActive == false) return true;
+
             switch (description)
             {
                 case "Throttle":
-                    __result = Forward;
+                    __result = ZForward;
                     return false;
                 case "Brake":
-                    __result = Reverse;
+                    __result = ZReverse;
                     return false;
                 case "Horizontal":
-                    __result = Left + Right;
+                    __result = ZLeft + ZRight;
                     return false;
                 case "Handbrake":
-                    __result = Handbrake;
+                    __result = ZHandbrake;
                     return false;
                 case "Clutch":
                     __result = ZClutch;
                     return false;
                 case "PlayerHorizontal": //need to modify charactermotor in unityscriptfirstpass
-                    __result = Left + Right;
+                    __result = ZLeft + ZRight;
                     return false;
                 case "PlayerVertical":
-                    __result = Forward + Reverse;
+                    __result = ZForward + ZReverse;
                     return false;
                 default:
                     break;
@@ -221,10 +232,12 @@ namespace AnalogKeyboardMSC
         [HarmonyPrefix]
         public static bool Prefix(string description, ref float __result)
         {
+            if (IsWootingSDKActive == false) return true;
+
             switch (description)
             {
                 case "Horizontal":
-                    __result = Left + Right;
+                    __result = ZLeft + ZRight;
                     return false;
                 default:
                     break;
