@@ -4,7 +4,6 @@ namespace AnalogKeyboardMSC
     internal static class Statics
     {
         public static bool IsWootingSDKActive = false;
-        public static bool IsGamePaused = false;
         public static ushort ZForwardKey = 0;
         public static ushort ZReverseKey = 0;
         public static ushort ZLeftKey = 0;
@@ -17,7 +16,5 @@ namespace AnalogKeyboardMSC
         public static float ZRight = 0;
         public static float ZClutch = 0;
         public static float ZHandbrake = 0;
-        public static string name = "";
-        public static string name2 = "";
     }
 }

@@ -4,6 +4,7 @@ namespace AnalogKeyboardMSC
 {
     public static class Convert
     {
+        //unity KeyCode to usb hid code
         public static ushort ConvertKeyCode(KeyCode id) => id switch
         {
             KeyCode.A => 4,

@@ -1,9 +1,11 @@
-﻿
+﻿//https://www.mozilla.org/en-US/MPL/2.0/
+//copy of https://github.com/WootingKb/wooting-analog-wrappers/blob/master/WootingAnalogSDK.NET/WootingAnalogSDK.cs
+
 //using Newtonsoft.Json;
 using System;
-using System.IO;
 using System.Runtime.InteropServices;
 
+//for use with .net framework 3.5 but some lines are commented out to remove Newtonsoft.Json since they aren't needed for this project
 namespace WootingAnalogSDKZ
 {
     public enum KeycodeType
