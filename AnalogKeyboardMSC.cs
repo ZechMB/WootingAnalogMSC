@@ -1,7 +1,6 @@
 ﻿using Harmony;
 using HutongGames.PlayMaker;
 using MSCLoader;
-using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -45,7 +44,7 @@ namespace AnalogKeyboardMSC
 #pragma warning disable CS8321 // Local function is declared but never used
             [DllImport("wooting_analog_wrapper", EntryPoint = "wooting_analog_initialise")]
             static extern int initialise();
-#pragma warning restore CS8321 // store the dll in memory
+#pragma warning restore CS8321
 
             string executingDllPath = Assembly.GetExecutingAssembly().Location;
             string modDirectory = Path.GetDirectoryName(executingDllPath);
@@ -92,28 +91,6 @@ namespace AnalogKeyboardMSC
             bool inMenu = FsmVariables.GlobalVariables.FindFsmBool("PlayerInMenu").Value;
             if (inMenu != inMenuPrev && inMenu == false) GetKeybinds();
             inMenuPrev = inMenu;
-
-            float result1 = 0;
-            result1 = WootingAnalogSDK.ReadAnalog(ZForwardKey, out _);
-            if (result1 > -1) ZForward = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZReverseKey, out _);
-            if (result1 > -1) ZReverse = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZLeftKey, out _);
-            if (result1 > -1) ZLeft = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZRightKey, out _);
-            if (result1 > -1) ZRight = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZClutchKey, out _);
-            if (result1 > -1) ZClutch = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZHandbrakeKey, out _);
-            if (result1 > -1) ZHandbrake = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerLeftKey, out _);
-            if (result1 > -1) ZPlayerLeft = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerRightKey, out _);
-            if (result1 > -1) ZPlayerRight = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerUpKey, out _);
-            if (result1 > -1) ZPlayerUp = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerDownKey, out _);
-            if (result1 > -1) ZPlayerDown = result1;
         }
 
         public void GetKeybinds()
@@ -188,19 +165,26 @@ namespace AnalogKeyboardMSC
             switch (description)
             {
                 case "Throttle":
-                    __result = ZForward;
+                    __result = WootingAnalogSDK.ReadAnalog(ZForwardKey, out _);
+                    if (__result < 0) return true; //if read fails then fallback to game code
                     return false;
                 case "Brake":
-                    __result = ZReverse;
+                    __result = WootingAnalogSDK.ReadAnalog(ZReverseKey, out _); ;
+                    if (__result < 0) return true;
                     return false;
                 case "Horizontal": //car steering
-                    __result = ZRight - ZLeft;
+                    float left = WootingAnalogSDK.ReadAnalog(ZLeftKey, out _);
+                    float right = WootingAnalogSDK.ReadAnalog(ZRightKey, out _);
+                    if (left < 0 || right < 0) return true;
+                    __result = right - left;
                     return false;
                 case "Handbrake":
-                    __result = ZHandbrake;
+                    __result = WootingAnalogSDK.ReadAnalog(ZHandbrakeKey, out _); ;
+                    if (__result < 0) return true;
                     return false;
                 case "Clutch":
-                    __result = ZClutch;
+                    __result = WootingAnalogSDK.ReadAnalog(ZClutchKey, out _); ;
+                    if (__result < 0) return true;
                     return false;
                 default:
                     break;
@@ -219,13 +203,22 @@ namespace AnalogKeyboardMSC
             switch (description)
             {
                 case "Horizontal": //boat steering
-                    __result = ZLeft + ZRight;
+                    float left1 = WootingAnalogSDK.ReadAnalog(ZLeftKey, out _);
+                    float right1 = WootingAnalogSDK.ReadAnalog(ZRightKey, out _);
+                    if (left1 < 0 || right1 < 0) return true;
+                    __result = right1 - left1;
                     return false;
                 case "PlayerHorizontal":
-                    __result = ZPlayerRight - ZPlayerLeft;
+                    float left2 = WootingAnalogSDK.ReadAnalog(ZPlayerLeftKey, out _);
+                    float right2 = WootingAnalogSDK.ReadAnalog(ZPlayerRightKey, out _);
+                    if (left2 < 0 || right2 < 0) return true;
+                    __result = right2 - left2;
                     return false;
                 case "PlayerVertical":
-                    __result = ZPlayerUp - ZPlayerDown;
+                    float up = WootingAnalogSDK.ReadAnalog(ZPlayerUpKey, out _);
+                    float down = WootingAnalogSDK.ReadAnalog(ZPlayerDownKey, out _);
+                    if (up < 0 || down < 0) return true;
+                    __result = up - down;
                     return false;
                 default:
                     break;
