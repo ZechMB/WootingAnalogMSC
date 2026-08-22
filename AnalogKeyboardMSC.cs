@@ -94,19 +94,26 @@ namespace AnalogKeyboardMSC
             inMenuPrev = inMenu;
 
             float result1 = 0;
-            WootingAnalogResult result2 = WootingAnalogResult.Failure;
-            result1 = WootingAnalogSDK.ReadAnalog(ZForwardKey, out result2);
+            result1 = WootingAnalogSDK.ReadAnalog(ZForwardKey, out _);
             if (result1 > -1) ZForward = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZReverseKey, out result2);
+            result1 = WootingAnalogSDK.ReadAnalog(ZReverseKey, out _);
             if (result1 > -1) ZReverse = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZLeftKey, out result2);
-            if (result1 > -1) ZLeft = -result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZRightKey, out result2);
+            result1 = WootingAnalogSDK.ReadAnalog(ZLeftKey, out _);
+            if (result1 > -1) ZLeft = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZRightKey, out _);
             if (result1 > -1) ZRight = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZClutchKey, out result2);
+            result1 = WootingAnalogSDK.ReadAnalog(ZClutchKey, out _);
             if (result1 > -1) ZClutch = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZHandbrakeKey, out result2);
+            result1 = WootingAnalogSDK.ReadAnalog(ZHandbrakeKey, out _);
             if (result1 > -1) ZHandbrake = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerLeftKey, out _);
+            if (result1 > -1) ZPlayerLeft = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerRightKey, out _);
+            if (result1 > -1) ZPlayerRight = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerUpKey, out _);
+            if (result1 > -1) ZPlayerUp = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerDownKey, out _);
+            if (result1 > -1) ZPlayerDown = result1;
         }
 
         public void GetKeybinds()
@@ -122,13 +129,10 @@ namespace AnalogKeyboardMSC
             List<int> names2 = [];
             if (inputNames != null)
             {
-                ModConsole.Print("postload1");
-                int[] leftPositions = inputNames
+                names2 = [.. inputNames
                     .Select((value, index) => new { value, index })
-                    .Where(pair => pair.value == "ThrottleOn" || pair.value == "BrakeOn" || pair.value == "Left" || pair.value == "Right" || pair.value == "Handbrake" || pair.value == "ClutchOn")
-                    .Select(pair => pair.index)
-                    .ToArray();
-                names2 = [.. leftPositions];
+                    .Where(pair => pair.index < 51)
+                    .Select(pair => pair.index)];
             }
 
             foreach (int num in names2)
@@ -154,20 +158,29 @@ namespace AnalogKeyboardMSC
                     case "ClutchOn":
                         ZClutchKey = Convert.ConvertKeyCode(inputsKeys[num]);
                         break;
+                    case "PlayerLeft":
+                        ZPlayerLeftKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
+                    case "PlayerRight":
+                        ZPlayerRightKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
+                    case "PlayerUp":
+                        ZPlayerUpKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
+                    case "PlayerDown":
+                        ZPlayerDownKey = Convert.ConvertKeyCode(inputsKeys[num]);
+                        break;
                     default:
                         break;
                 }
-                ModConsole.Log("1= " + num);
-                ModConsole.Log("2= " + inputNames[num]);
-                ModConsole.Log("3= " + inputsKeys[num].ToString());
+                //ModConsole.Log(num + " = " + inputNames[num] + " = " + inputsKeys[num].ToString());
             }
         }
     }
 
-    [HarmonyPatch(typeof(cInput), "GetAxisRaw", new[] { typeof(string) })]
+    [HarmonyPatch(typeof(cInput), "GetAxisRaw", [typeof(string)])]
     public static class Patch_cInput_GetAxisRaw
     {
-        [HarmonyPrefix]
         public static bool Prefix(string description, ref float __result)
         {
             if (IsWootingSDKActive == false) return true;
@@ -180,8 +193,8 @@ namespace AnalogKeyboardMSC
                 case "Brake":
                     __result = ZReverse;
                     return false;
-                case "Horizontal":
-                    __result = ZLeft + ZRight;
+                case "Horizontal": //car steering
+                    __result = ZRight - ZLeft;
                     return false;
                 case "Handbrake":
                     __result = ZHandbrake;
@@ -189,38 +202,34 @@ namespace AnalogKeyboardMSC
                 case "Clutch":
                     __result = ZClutch;
                     return false;
-                case "PlayerHorizontal": //need to modify charactermotor in unityscriptfirstpass
-                    __result = ZLeft + ZRight;
-                    return false;
-                case "PlayerVertical":
-                    __result = ZForward + ZReverse;
-                    return false;
                 default:
                     break;
             }
-
             return true;
         }
     }
 
-    //boat uses this instead of raw
-    [HarmonyPatch(typeof(cInput), "GetAxis", new[] { typeof(string) })]
+    [HarmonyPatch(typeof(cInput), "GetAxis", [typeof(string)])]
     public static class Patch_cInput_GetAxis
     {
-        [HarmonyPrefix]
         public static bool Prefix(string description, ref float __result)
         {
             if (IsWootingSDKActive == false) return true;
 
             switch (description)
             {
-                case "Horizontal":
+                case "Horizontal": //boat steering
                     __result = ZLeft + ZRight;
+                    return false;
+                case "PlayerHorizontal":
+                    __result = ZPlayerRight - ZPlayerLeft;
+                    return false;
+                case "PlayerVertical":
+                    __result = ZPlayerUp - ZPlayerDown;
                     return false;
                 default:
                     break;
             }
-
             return true;
         }
     }
