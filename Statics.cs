@@ -4,6 +4,7 @@ namespace AnalogKeyboardMSC
     internal static class Statics
     {
         public static bool IsWootingSDKActive = false;
+        public static bool AreKeysLocked = false;
         public static ushort ZForwardKey = 0;
         public static ushort ZReverseKey = 0;
         public static ushort ZLeftKey = 0;

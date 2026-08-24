@@ -20,9 +20,10 @@ namespace AnalogKeyboardMSC
         public override string Name => "AnalogKeyboard"; // Your mod name
         public override string Author => "zec"; // Name of the Author (your name)
         public override string Version => "1.0"; // Version
-        public override string Description => ""; // Short description of your mod 
+        public override string Description => "Control game with analog input"; // Short description of your mod 
         public override Game SupportedGames => Game.MySummerCar_And_MyWinterCar;
         bool inMenuPrev = false;
+        SettingsKeybind lockInputBind;
 
 
         public override void ModSetup()
@@ -30,6 +31,44 @@ namespace AnalogKeyboardMSC
             SetupFunction(Setup.OnLoad, Mod_OnLoad);
             SetupFunction(Setup.PostLoad, Mod_PostLoad);
             SetupFunction(Setup.Update, Mod_Update);
+            SetupFunction(Setup.ModSettings, Mod_Settings);
+            SetupFunction(Setup.OnGUI, Mod_OnGui);
+        }
+
+        private void Mod_OnGui()
+        {
+            if (AreKeysLocked)
+            {
+                float labelWidth = 300f;
+                float labelHeight = 50f;
+
+                float xPosition = (Screen.width / 2f) - (labelWidth / 2f);
+                float yPosition = (Screen.height / 2f) - (labelHeight / 2f) - 100f;
+
+                Rect labelRect = new(xPosition, yPosition, labelWidth, labelHeight);
+
+                GUIStyle textStyle = new(GUI.skin.label)
+                {
+                    fontSize = 22,
+                    fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter
+                };
+
+                string message = "Inputs locked, Unlock with " + lockInputBind.GetKeybindValue;
+
+                // Draw a shadow first for maximum readability
+                textStyle.normal.textColor = Color.black;
+                GUI.Label(new Rect(labelRect.x + 2, labelRect.y + 2, labelRect.width, labelRect.height), message, textStyle);
+
+                // Draw the main text over the shadow
+                textStyle.normal.textColor = Color.white;
+                GUI.Label(new Rect(xPosition, yPosition, labelWidth, labelHeight), message, textStyle);
+            }
+        }
+
+        private void Mod_Settings()
+        {
+            lockInputBind = Keybind.Add("ZLockInput", "Lock Input", KeyCode.Y);
         }
 
         // Called once, when mod is loading after game is fully loaded
@@ -93,27 +132,36 @@ namespace AnalogKeyboardMSC
             if (inMenu != inMenuPrev && inMenu == false) GetKeybinds();
             inMenuPrev = inMenu;
 
-            float result1 = 0;
-            result1 = WootingAnalogSDK.ReadAnalog(ZForwardKey, out _);
-            if (result1 > -1) ZForward = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZReverseKey, out _);
-            if (result1 > -1) ZReverse = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZLeftKey, out _);
-            if (result1 > -1) ZLeft = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZRightKey, out _);
-            if (result1 > -1) ZRight = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZClutchKey, out _);
-            if (result1 > -1) ZClutch = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZHandbrakeKey, out _);
-            if (result1 > -1) ZHandbrake = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerLeftKey, out _);
-            if (result1 > -1) ZPlayerLeft = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerRightKey, out _);
-            if (result1 > -1) ZPlayerRight = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerUpKey, out _);
-            if (result1 > -1) ZPlayerUp = result1;
-            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerDownKey, out _);
-            if (result1 > -1) ZPlayerDown = result1;
+            bool keyDown = lockInputBind.GetKeybindDown();
+            if (keyDown)
+            {
+                AreKeysLocked = !AreKeysLocked;
+            }
+
+            if (!AreKeysLocked)
+            {
+                float result1 = 0;
+                result1 = WootingAnalogSDK.ReadAnalog(ZForwardKey, out _);
+                if (result1 > -1) ZForward = result1;
+                result1 = WootingAnalogSDK.ReadAnalog(ZReverseKey, out _);
+                if (result1 > -1) ZReverse = result1;
+                result1 = WootingAnalogSDK.ReadAnalog(ZLeftKey, out _);
+                if (result1 > -1) ZLeft = result1;
+                result1 = WootingAnalogSDK.ReadAnalog(ZRightKey, out _);
+                if (result1 > -1) ZRight = result1;
+                result1 = WootingAnalogSDK.ReadAnalog(ZClutchKey, out _);
+                if (result1 > -1) ZClutch = result1;
+                result1 = WootingAnalogSDK.ReadAnalog(ZHandbrakeKey, out _);
+                if (result1 > -1) ZHandbrake = result1;
+                result1 = WootingAnalogSDK.ReadAnalog(ZPlayerLeftKey, out _);
+                if (result1 > -1) ZPlayerLeft = result1;
+                result1 = WootingAnalogSDK.ReadAnalog(ZPlayerRightKey, out _);
+                if (result1 > -1) ZPlayerRight = result1;
+                result1 = WootingAnalogSDK.ReadAnalog(ZPlayerUpKey, out _);
+                if (result1 > -1) ZPlayerUp = result1;
+                result1 = WootingAnalogSDK.ReadAnalog(ZPlayerDownKey, out _);
+                if (result1 > -1) ZPlayerDown = result1;
+            }
         }
 
         public void GetKeybinds()
