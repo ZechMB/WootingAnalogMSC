@@ -1,7 +1,6 @@
 ﻿using Harmony;
 using HutongGames.PlayMaker;
 using MSCLoader;
-using Steamworks;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -84,7 +83,7 @@ namespace AnalogKeyboardMSC
 #pragma warning disable CS8321 // Local function is declared but never used
             [DllImport("wooting_analog_wrapper", EntryPoint = "wooting_analog_initialise")]
             static extern int initialise();
-#pragma warning restore CS8321 // store the dll in memory
+#pragma warning restore CS8321
 
             string executingDllPath = Assembly.GetExecutingAssembly().Location;
             string modDirectory = Path.GetDirectoryName(executingDllPath);
@@ -118,7 +117,6 @@ namespace AnalogKeyboardMSC
         private void Mod_PostLoad()
         {
             if (IsWootingSDKActive == false) return;
-            ModConsole.Print("wooting postload, active= " + IsWootingSDKActive);
             GetKeybinds();
         }
 
@@ -267,7 +265,7 @@ namespace AnalogKeyboardMSC
             switch (description)
             {
                 case "Horizontal": //boat steering
-                    __result = ZLeft + ZRight;
+                    __result = ZRight - ZLeft;
                     return false;
                 case "PlayerHorizontal":
                     __result = ZPlayerRight - ZPlayerLeft;
