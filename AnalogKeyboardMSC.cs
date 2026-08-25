@@ -23,6 +23,7 @@ namespace AnalogKeyboardMSC
         public override Game SupportedGames => Game.MySummerCar_And_MyWinterCar;
         bool inMenuPrev = false;
         SettingsKeybind lockInputBind;
+        SettingsCheckBox tabout;
 
 
         public override void ModSetup()
@@ -53,7 +54,7 @@ namespace AnalogKeyboardMSC
                     alignment = TextAnchor.MiddleCenter
                 };
 
-                string message = "Inputs locked, Unlock with " + lockInputBind.GetKeybindValue;
+                string message = "Inputs locked, Unlock with [" + lockInputBind.GetKeybindValue + "]";
 
                 // Draw a shadow first for maximum readability
                 textStyle.normal.textColor = Color.black;
@@ -68,6 +69,7 @@ namespace AnalogKeyboardMSC
         private void Mod_Settings()
         {
             lockInputBind = Keybind.Add("ZLockInput", "Lock Input", KeyCode.Y);
+            tabout = Settings.AddCheckBox("DisableOnTabOut", "Disable input when tabbed out", true);
         }
 
         // Called once, when mod is loading after game is fully loaded
@@ -109,8 +111,8 @@ namespace AnalogKeyboardMSC
             }
             else
             {
-                ModConsole.Print("wooting error1: " + result1);
-                ModConsole.Print("wooting error2: " + result2.ToString());
+                ModConsole.Error("wooting error1: " + result1);
+                ModConsole.Error("wooting error2: " + result2.ToString());
             }
         }
 
@@ -138,33 +140,42 @@ namespace AnalogKeyboardMSC
 
             if (!AreKeysLocked)
             {
-                float result1 = 0;
-                result1 = WootingAnalogSDK.ReadAnalog(ZForwardKey, out _);
-                if (result1 > -1) ZForward = result1;
-                result1 = WootingAnalogSDK.ReadAnalog(ZReverseKey, out _);
-                if (result1 > -1) ZReverse = result1;
-                result1 = WootingAnalogSDK.ReadAnalog(ZLeftKey, out _);
-                if (result1 > -1) ZLeft = result1;
-                result1 = WootingAnalogSDK.ReadAnalog(ZRightKey, out _);
-                if (result1 > -1) ZRight = result1;
-                result1 = WootingAnalogSDK.ReadAnalog(ZClutchKey, out _);
-                if (result1 > -1) ZClutch = result1;
-                result1 = WootingAnalogSDK.ReadAnalog(ZHandbrakeKey, out _);
-                if (result1 > -1) ZHandbrake = result1;
-                result1 = WootingAnalogSDK.ReadAnalog(ZPlayerLeftKey, out _);
-                if (result1 > -1) ZPlayerLeft = result1;
-                result1 = WootingAnalogSDK.ReadAnalog(ZPlayerRightKey, out _);
-                if (result1 > -1) ZPlayerRight = result1;
-                result1 = WootingAnalogSDK.ReadAnalog(ZPlayerUpKey, out _);
-                if (result1 > -1) ZPlayerUp = result1;
-                result1 = WootingAnalogSDK.ReadAnalog(ZPlayerDownKey, out _);
-                if (result1 > -1) ZPlayerDown = result1;
+                if (tabout.GetValue() == true)
+                {
+                    if (WindowCheck.IsGameFocused()) GetKeyValues();
+                }
+                else GetKeyValues();
             }
+        }
+
+        public void GetKeyValues()
+        {
+            float result1 = 0;
+            result1 = WootingAnalogSDK.ReadAnalog(ZForwardKey, out _);
+            if (result1 > -1) ZForward = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZReverseKey, out _);
+            if (result1 > -1) ZReverse = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZLeftKey, out _);
+            if (result1 > -1) ZLeft = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZRightKey, out _);
+            if (result1 > -1) ZRight = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZClutchKey, out _);
+            if (result1 > -1) ZClutch = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZHandbrakeKey, out _);
+            if (result1 > -1) ZHandbrake = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerLeftKey, out _);
+            if (result1 > -1) ZPlayerLeft = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerRightKey, out _);
+            if (result1 > -1) ZPlayerRight = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerUpKey, out _);
+            if (result1 > -1) ZPlayerUp = result1;
+            result1 = WootingAnalogSDK.ReadAnalog(ZPlayerDownKey, out _);
+            if (result1 > -1) ZPlayerDown = result1;
         }
 
         public void GetKeybinds()
         {
-            ModConsole.Print("getting keybinds");
+            //ModConsole.Print("getting keybinds");
             Type targetType = typeof(cInput);
             FieldInfo nameField = targetType.GetField("_inputName", BindingFlags.NonPublic | BindingFlags.Static);
             FieldInfo inputsField = targetType.GetField("_inputPrimary", BindingFlags.NonPublic | BindingFlags.Static);
